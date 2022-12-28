@@ -4,103 +4,153 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
-using DamienG.Security.Cryptography;
+using Soft160.Data.Cryptography;
+using TGE.SimpleCommandLine;
 
 namespace RSTBPatcher
 {
     class Program
     {
-        
+        public static ProgramOptions Options { get; private set; }
+        public class ProgramOptions
+        {
+            [Option("i", "input", "filepath", "Specifies the path to the ResourceTable file to use as input.", Required = true)]
+            public string Input { get; set; }
+
+            [Option("o", "output", "filepath", "Specifies the path to the ResourceTable file to save the output to.", Required = true)]
+            public string Output { get; set; }
+
+            [Option("m", "mod-dir", "directorypath", "Directory containing mod filestructure to update ResourceTable with.")]
+            public string ModDir { get; set; }
+
+            [Option("t", "txt", "true|false", "When true, dump output RSTB data to a text file.")]
+            public bool DumpTxt { get; set; } = false;
+
+            [Option("n", "named", "true|false", "When true, the full path will be saved rather than converted to CRC32.")]
+            public bool UseNamedTable { get; set; } = false;
+
+            [Group("a")]
+            public AddOptions Add { get; set; }
+
+            [Group("d")]
+            public DeleteOptions Delete { get; set; }
+
+            public class AddOptions
+            {
+                [Option("p", "path", "filepath", "The path (or CRC32) of the entry to add to the ResourceTable. If it exists, it will be replaced.")]
+                public string Path { get; set; }
+
+                [Option("s", "size", "integer", "The size to reserve for the file. By default, this will be calculated automatically.")]
+                public int Size { get; set; } = -1;
+
+                [Option("u", "unknown", "true|false", "When true, the unknown value will be set to 1 instead of 0.")]
+                public bool SetUnknown { get; set; } = false;
+            }
+
+            public class DeleteOptions
+            {
+                [Option("p", "path", "The path (or CRC32) of the entry to delete from the ResourceTable.")]
+                public string Path { get; set; }
+            }
+        }
+
         static void Main(string[] args)
         {
+            try
+            {
+                string about = SimpleCommandLineFormatter.Default.FormatAbout<ProgramOptions>("ShrineFox", "ResourceSizeTable parser and patcher for Nintendo Switch games.");
+                Console.WriteLine(about);
+                Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(args);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return;
+            }
             Console.WriteLine("Reading Resource Table data...");
 
-            RSTB rstb = RSTB.Load(".\\2.0.6\\ResourceSizeTable.rsizetable");
-
-            Console.WriteLine($"Header Magic: {Encoding.ASCII.GetString(rstb.Header.Magic)}");
-            Console.WriteLine($"CRC32 Table Entries: {rstb.Header.EntryTableSize}");
-            Console.WriteLine($"Named Table Entries: {rstb.Header.NameTableSize}\n");
-
-            Console.WriteLine("Saving Resource Table data...");
-
-            RSTB.Save(rstb, "test.rstc");
-            Console.WriteLine($"Saved: test.rstc");
-
-            DumpRSTBTxt(rstb);
+            DoOptions();
         }
 
-        public static void DumpRSTBTxt(RSTB rstb, string outPath = ".\\ResourceSizeTableDump.txt")
+        private static void DoOptions()
         {
-            Console.WriteLine("Writing txt...");
-
-            // Header Magic
-            string txt = $"{Encoding.ASCII.GetString(rstb.Header.Magic)}\n";
-            // CRC32 Table Entries
-            foreach (var entry in rstb.EntryTable)
-                txt += $"{CRC32ToHexString(entry.Crc32)} {entry.Size} {entry.Unknown}\n";
-            txt += "\n";
-            // Named Table Entries
-            foreach (var entry in rstb.NameTable)
-                txt += $"{NameEntryToString(entry.Name)} {entry.Size} {entry.Unknown}\n";
-            txt = txt.TrimEnd('\n');
-            File.WriteAllText(outPath, txt);
-            Console.WriteLine($"Done writing txt: {outPath}");
-        }
-
-        private static string NameEntryToString(byte[] name)
-        {
-            return Encoding.ASCII.GetString(name).TrimEnd('\0');
-        }
-
-        private static string CRC32ToHexString(uint crc32)
-        {
-            return BitConverter.ToString(BitConverter.GetBytes(crc32).Reverse().ToArray()).Replace("-", "");
-        }
-
-        private static uint HexStringToCRC32(string hexString)
-        {
-            // https://stackoverflow.com/questions/321370/how-can-i-convert-a-hex-string-to-a-byte-array#comment112899143_321370
-            byte[] data = BigInteger.Parse("00" + hexString, System.Globalization.NumberStyles.HexNumber).ToByteArray();
-            while (data.Count() < 4)
-                data = data.Concat(new byte[] { 0x00 }).ToArray();
-            return BitConverter.ToUInt32(data);
-        }
-
-        public static RSTB ReadRSTBTxt(string path = ".\\2.0.6\\ResourceSizeTable.rsizetable.txt")
-        {
-            // Load RSTB data from .txt dump
-            Console.WriteLine($"Reading txt: {path}");
-            RSTB rstb = new RSTB();
-
-            var lines = File.ReadAllLines(path);
-            bool namedTable = false;
-            // Start from line 2 since line 1 is reserved for header magic
-            for (int i = 1; i < lines.Count(); i++)
+            RSTB rstb = LoadRSTB();
+            if (rstb != null)
             {
-                string[] splitLine = lines[i].Split(' ');
-
-                if (splitLine.Count() == 3)
+                // Update table with files from mod directory
+                if (!string.IsNullOrEmpty(Options.ModDir))
                 {
-                    if (!namedTable)
-                        rstb.EntryTable.Add(new RSTBTableEntry(HexStringToCRC32(splitLine[0]), Convert.ToUInt32(splitLine[1]), Convert.ToUInt32(splitLine[2])));
+                    if (Directory.Exists(Options.ModDir))
+                    {
+                        foreach (var file in Directory.GetFiles(Options.ModDir, "*", SearchOption.AllDirectories))
+                        {
+                            string relativePath = Path.GetRelativePath(Options.ModDir, file);
+                            rstb = RSTB.Add(rstb, relativePath, -1, Options.UseNamedTable);
+                        }
+                    }
                     else
-                        rstb.NameTable.Add(new RSTBNameEntry(splitLine[0], Convert.ToUInt32(splitLine[1]), Convert.ToUInt32(splitLine[2])));
+                        Console.WriteLine($"Could not find mod directory: \"{Options.ModDir}\"");
                 }
-                else
+                else if (!string.IsNullOrEmpty(Options.Add.Path))
                 {
-                    // Switch to named table entries
-                    namedTable = true;
+                    int size = Options.Add.Size;
+                    if (size == -1)
+                    {
+                        // Try to get file size if none specified
+                        if (File.Exists(Options.Add.Path))
+                        {
+                            size = Convert.ToInt32(new FileInfo(Options.Add.Path).Length);
+                        }
+                        else
+                        {
+                            size = 0; // Set size to 0
+                            Console.WriteLine($"Could not find file path: \"{Options.Add.Path}\"");
+                        }
+                    }
+                    rstb = RSTB.Add(rstb, Options.Add.Path, size, Options.UseNamedTable, Options.Add.SetUnknown);
+                }
+                else if (!string.IsNullOrEmpty(Options.Delete.Path))
+                {
+                    rstb = RSTB.Delete(rstb, Options.Delete.Path, Options.UseNamedTable);
+                }
+
+                // Output new RSTB and optionally .txt
+                if (Options.DumpTxt)
+                {
+                    RSTB.DumpTxt(rstb, Options.Input + ".txt");
+                    Console.WriteLine($"Dumped RSTB to .txt: {Options.Input}.txt");
+                }
+                RSTB.Save(rstb, Options.Output);
+
+                Console.WriteLine($"Done, RSTB file saved to: {Options.Output}");
+            }
+        }
+
+        private static RSTB LoadRSTB()
+        {
+            if (File.Exists(Options.Input))
+            {
+                switch(Path.GetExtension(Options.Input))
+                {
+                    case ".srsizetable":
+                        // TODO: Uncompress yaz0
+                        break;
+                    case ".rsizetable":
+                        return RSTB.Load(Options.Input);
+                    case ".txt":
+                        return RSTB.LoadTxt(Options.Input);
+                    default:
+                        Console.WriteLine($"Unknown extension: \"{Path.GetExtension(Options.Input)}\"" +
+                            $"\n\tThis tool can only parse: *.srsizetable, *.rsizetable, *.txt");
+                        break;
                 }
             }
-            
-            // Create header
-            if (lines[0] == "RSTC")
-                rstb.Header.Magic = new byte[4] { 0x52, 0x53, 0x54, 0x43 };
-            rstb.Header.EntryTableSize = Convert.ToUInt32(rstb.EntryTable.Count);
-            rstb.Header.NameTableSize = Convert.ToUInt32(rstb.NameTable.Count);
+            else
+            {
+                Console.WriteLine($"Could not find input file: \"{Options.Input}\"");
+            }
 
-            Console.WriteLine("Done reading txt");
-            return rstb;
+            return null;
         }
     }
 }

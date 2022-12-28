@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Soft160.Data.Cryptography;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace RSTBPatcher
@@ -85,6 +87,129 @@ namespace RSTBPatcher
                     }
                 }
             }   
+        }
+        public static RSTB Add(RSTB rstb, string path, int size = -1, bool useNamed = false, bool unknown = false)
+        {
+            // Don't convert path if it's already CRC32 in hex form
+            uint crc32 = 0;
+            try
+            {
+                crc32 = HexStringToCRC32(path);
+            }
+            catch { }
+            if (crc32 == 0)
+                crc32 = StringToCRC32(path);
+
+            // Remove existing entry with matching CRC32 or path
+            rstb = RSTB.Delete(rstb, path, useNamed);
+            
+            // TODO: Update path to remove .s from file extension
+
+            if (!useNamed)
+                rstb.EntryTable.Add(new RSTBTableEntry { Crc32 = crc32, Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
+            else
+                rstb.NameTable.Add(new RSTBNameEntry { Name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray(), Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
+
+            // Sort CRC32 values from lowest to highest
+            rstb.EntryTable = rstb.EntryTable.OrderBy(x => x.Crc32).ToList();
+
+            // Update header sizes
+            rstb.Header.EntryTableSize = Convert.ToUInt32(rstb.EntryTable.Count);
+            rstb.Header.NameTableSize = Convert.ToUInt32(rstb.NameTable.Count);
+
+            return rstb;
+        }
+        public static RSTB Delete(RSTB rstb, string path, bool useNamed = false)
+        {
+            // Don't convert path if it's already CRC32 in hex form
+            uint crc32 = 0;
+            try
+            {
+                crc32 = HexStringToCRC32(path);
+            }
+            catch { }
+            if (crc32 == 0)
+                crc32 = StringToCRC32(path);
+
+            if (!useNamed)
+                rstb.EntryTable.RemoveAll(x => x.Crc32.Equals(crc32));
+            else
+                rstb.NameTable.RemoveAll(x => x.Name.Equals(new RSTBNameEntry { Name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray() }));
+
+            // Update header sizes
+            rstb.Header.EntryTableSize = Convert.ToUInt32(rstb.EntryTable.Count);
+            rstb.Header.NameTableSize = Convert.ToUInt32(rstb.NameTable.Count);
+
+            return rstb;
+        }
+        public static void DumpTxt(RSTB rstb, string path)
+        {
+            // Header Magic
+            string txt = $"{Encoding.ASCII.GetString(rstb.Header.Magic)}\n";
+            // CRC32 Table Entries
+            foreach (var entry in rstb.EntryTable)
+                txt += $"{CRC32ToHexString(entry.Crc32)} {entry.Size} {entry.Unknown}\n";
+            txt += "\n";
+            // Named Table Entries
+            foreach (var entry in rstb.NameTable)
+                txt += $"{NameEntryToString(entry.Name)} {entry.Size} {entry.Unknown}\n";
+            txt = txt.TrimEnd('\n');
+            File.WriteAllText(path, txt);
+        }
+        public static RSTB LoadTxt(string path)
+        {
+            // Load RSTB data from .txt
+            RSTB rstb = new RSTB();
+
+            var lines = File.ReadAllLines(path);
+            bool namedTable = false;
+            // Start from line 2 since line 1 is reserved for header magic
+            for (int i = 1; i < lines.Count(); i++)
+            {
+                string[] splitLine = lines[i].Split(' ');
+
+                if (splitLine.Count() == 3)
+                {
+                    if (!namedTable)
+                        rstb.EntryTable.Add(new RSTBTableEntry(HexStringToCRC32(splitLine[0]), Convert.ToUInt32(splitLine[1]), Convert.ToUInt32(splitLine[2])));
+                    else
+                        rstb.NameTable.Add(new RSTBNameEntry(splitLine[0], Convert.ToUInt32(splitLine[1]), Convert.ToUInt32(splitLine[2])));
+                }
+                else
+                {
+                    // Switch to named table entries
+                    namedTable = true;
+                }
+            }
+
+            // Create header
+            if (lines[0] == "RSTC")
+                rstb.Header.Magic = new byte[4] { 0x52, 0x53, 0x54, 0x43 };
+            rstb.Header.EntryTableSize = Convert.ToUInt32(rstb.EntryTable.Count);
+            rstb.Header.NameTableSize = Convert.ToUInt32(rstb.NameTable.Count);
+
+            return rstb;
+        }
+        private static string NameEntryToString(byte[] name)
+        {
+            return Encoding.ASCII.GetString(name).TrimEnd('\0');
+        }
+
+        private static uint StringToCRC32(string path)
+        {
+            return CRC.Crc32(Encoding.ASCII.GetBytes(path));
+        }
+        private static string CRC32ToHexString(uint crc32)
+        {
+            return BitConverter.ToString(BitConverter.GetBytes(crc32).Reverse().ToArray()).Replace("-", "");
+        }
+        private static uint HexStringToCRC32(string hexString)
+        {
+            // https://stackoverflow.com/questions/321370/how-can-i-convert-a-hex-string-to-a-byte-array#comment112899143_321370
+            byte[] data = BigInteger.Parse("00" + hexString, System.Globalization.NumberStyles.HexNumber).ToByteArray();
+            while (data.Count() < 4)
+                data = data.Concat(new byte[] { 0x00 }).ToArray();
+            return BitConverter.ToUInt32(data);
         }
     }
 

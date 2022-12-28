@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.33130.400
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSTBPatcher", "RSTBPatcher.csproj", "{C32D8E68-7FD7-4647-8255-496A2366C2FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RSTBPatcher", "RSTBPatcher.csproj", "{C32D8E68-7FD7-4647-8255-496A2366C2FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCommandLine", "..\SimpleCommandLine\Source\SimpleCommandLine\SimpleCommandLine.csproj", "{7A1F22A9-5EED-4F8D-A3C9-A99B8ECFACB0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{C32D8E68-7FD7-4647-8255-496A2366C2FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C32D8E68-7FD7-4647-8255-496A2366C2FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C32D8E68-7FD7-4647-8255-496A2366C2FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A1F22A9-5EED-4F8D-A3C9-A99B8ECFACB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A1F22A9-5EED-4F8D-A3C9-A99B8ECFACB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A1F22A9-5EED-4F8D-A3C9-A99B8ECFACB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A1F22A9-5EED-4F8D-A3C9-A99B8ECFACB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
