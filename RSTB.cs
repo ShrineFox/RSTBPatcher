@@ -61,7 +61,10 @@ namespace RSTBPatcher
         }
         public static void Save(RSTB rstb, string outPath)
         {
-            using (FileStream stream = new FileStream(outPath, FileMode.OpenOrCreate))
+            if (!Directory.Exists(Path.GetDirectoryName(outPath)))
+                Directory.CreateDirectory(Path.GetDirectoryName(outPath));
+
+            using (FileStream stream = new FileStream(outPath + ".temp", FileMode.OpenOrCreate))
             {
                 using (BinaryWriter writer = new BinaryWriter(stream))
                 {
@@ -86,7 +89,23 @@ namespace RSTBPatcher
                             writer.Write(entry.Unknown); // 4 bytes of padding
                     }
                 }
-            }   
+            }
+
+            // Yaz0 Encode
+            if (Path.GetExtension(outPath) != ".rsizetable")
+            {
+                Console.WriteLine("Encoding output file with Yaz0...");
+                Yaz0.Encode(outPath + ".temp", outPath);
+
+#if !DEBUG
+                Console.WriteLine("Deleting temporary unencoded file...");
+                if (File.Exists(outPath + ".temp"))
+                    File.Delete(outPath + ".temp");
+#endif
+            }
+            else
+                Console.WriteLine("Skipping Yaz0 encoding since output extension is .rsizetable.");
+
         }
         public static RSTB Add(RSTB rstb, string path, int size = -1, bool useNamed = false, bool unknown = false)
         {
@@ -102,13 +121,18 @@ namespace RSTBPatcher
 
             // Remove existing entry with matching CRC32 or path
             rstb = RSTB.Delete(rstb, path, useNamed);
-            
-            // TODO: Update path to remove .s from file extension
 
             if (!useNamed)
+            {
                 rstb.EntryTable.Add(new RSTBTableEntry { Crc32 = crc32, Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
+                Console.WriteLine($"Added Entry to CRC32 Table: {path} {size} {unknown}\n\tCRC32: 0x{CRC32ToHexString(crc32)} ({crc32})");
+            }
             else
-                rstb.NameTable.Add(new RSTBNameEntry { Name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray(), Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
+            {
+                byte[] name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray();
+                rstb.NameTable.Add(new RSTBNameEntry { Name = name, Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
+                Console.WriteLine($"Added Entry to Named Table: {path} {size} {unknown}");
+            }
 
             // Sort CRC32 values from lowest to highest
             rstb.EntryTable = rstb.EntryTable.OrderBy(x => x.Crc32).ToList();
@@ -132,9 +156,26 @@ namespace RSTBPatcher
                 crc32 = StringToCRC32(path);
 
             if (!useNamed)
-                rstb.EntryTable.RemoveAll(x => x.Crc32.Equals(crc32));
+            {
+                if (rstb.EntryTable.Any(x => x.Crc32.Equals(crc32)))
+                {
+                    rstb.EntryTable.RemoveAll(x => x.Crc32.Equals(crc32));
+                    Console.WriteLine($"Removing existing CRC32 entry: 0x{CRC32ToHexString(crc32)} ({crc32})");
+                }
+                else
+                    Console.WriteLine($"Could not find existing CRC32 entry to remove: 0x{CRC32ToHexString(crc32)} ({crc32})");
+            }
             else
-                rstb.NameTable.RemoveAll(x => x.Name.Equals(new RSTBNameEntry { Name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray() }));
+            {
+                byte[] name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray();
+                if (rstb.NameTable.Any(x => x.Name.Equals(name)))
+                {
+                    rstb.NameTable.RemoveAll(x => x.Name.Equals(name));
+                    Console.WriteLine($"Removing existing Name entry: {path}");
+                }
+                else
+                    Console.WriteLine($"Could not find existing Name entry to remove: {path}");
+            }
 
             // Update header sizes
             rstb.Header.EntryTableSize = Convert.ToUInt32(rstb.EntryTable.Count);
@@ -154,6 +195,10 @@ namespace RSTBPatcher
             foreach (var entry in rstb.NameTable)
                 txt += $"{NameEntryToString(entry.Name)} {entry.Size} {entry.Unknown}\n";
             txt = txt.TrimEnd('\n');
+
+            // Write to .txt file
+            if (!Directory.Exists(Path.GetDirectoryName(path)))
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, txt);
         }
         public static RSTB LoadTxt(string path)

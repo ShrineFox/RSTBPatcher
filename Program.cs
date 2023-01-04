@@ -29,6 +29,9 @@ namespace RSTBPatcher
             [Option("n", "named", "true|false", "When true, the full path will be saved rather than converted to CRC32.")]
             public bool UseNamedTable { get; set; } = false;
 
+            [Option("u", "unknown", "true|false", "When true, the unknown value will be set to 1 instead of 0.")]
+            public bool SetUnknown { get; set; } = false;
+
             [Group("a")]
             public AddOptions Add { get; set; }
 
@@ -42,9 +45,6 @@ namespace RSTBPatcher
 
                 [Option("s", "size", "integer", "The size to reserve for the file. By default, this will be calculated automatically.")]
                 public int Size { get; set; } = -1;
-
-                [Option("u", "unknown", "true|false", "When true, the unknown value will be set to 1 instead of 0.")]
-                public bool SetUnknown { get; set; } = false;
             }
 
             public class DeleteOptions
@@ -74,7 +74,18 @@ namespace RSTBPatcher
 
         private static void DoOptions()
         {
+
+            // Decode Yaz0
+            if (Path.GetExtension(Options.Input) == ".srsizetable")
+            {
+                string newPath = Path.Combine(Path.GetDirectoryName(Options.Input), Path.GetFileNameWithoutExtension(Options.Input) + ".rsizetable");
+                Console.WriteLine($"Decompressing RSTB to new file: {newPath}");
+                Yaz0.Decode(Options.Input, newPath);
+                Options.Input = newPath;
+            }
+
             RSTB rstb = LoadRSTB();
+
             if (rstb != null)
             {
                 // Update table with files from mod directory
@@ -84,8 +95,9 @@ namespace RSTBPatcher
                     {
                         foreach (var file in Directory.GetFiles(Options.ModDir, "*", SearchOption.AllDirectories))
                         {
-                            string relativePath = Path.GetRelativePath(Options.ModDir, file);
-                            rstb = RSTB.Add(rstb, relativePath, -1, Options.UseNamedTable);
+                            string relativePath = Path.GetRelativePath(Options.ModDir, file).Replace("\\","/").Replace(".zs","");
+                            long size = new FileInfo(file).Length;
+                            rstb = RSTB.Add(rstb, relativePath, Convert.ToInt32(size), Options.UseNamedTable, Options.SetUnknown);
                         }
                     }
                     else
@@ -107,7 +119,7 @@ namespace RSTBPatcher
                             Console.WriteLine($"Could not find file path: \"{Options.Add.Path}\"");
                         }
                     }
-                    rstb = RSTB.Add(rstb, Options.Add.Path, size, Options.UseNamedTable, Options.Add.SetUnknown);
+                    rstb = RSTB.Add(rstb, Options.Add.Path, size, Options.UseNamedTable, Options.SetUnknown);
                 }
                 else if (!string.IsNullOrEmpty(Options.Delete.Path))
                 {
@@ -120,8 +132,9 @@ namespace RSTBPatcher
                     RSTB.DumpTxt(rstb, Options.Input + ".txt");
                     Console.WriteLine($"Dumped RSTB to .txt: {Options.Input}.txt");
                 }
-                RSTB.Save(rstb, Options.Output);
 
+                Console.WriteLine("Saving and compressing new RSTB...");
+                RSTB.Save(rstb, Options.Output);
                 Console.WriteLine($"Done, RSTB file saved to: {Options.Output}");
             }
         }
@@ -132,9 +145,6 @@ namespace RSTBPatcher
             {
                 switch(Path.GetExtension(Options.Input))
                 {
-                    case ".srsizetable":
-                        // TODO: Uncompress yaz0
-                        break;
                     case ".rsizetable":
                         return RSTB.Load(Options.Input);
                     case ".txt":
