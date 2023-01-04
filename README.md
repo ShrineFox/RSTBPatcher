@@ -23,8 +23,10 @@ A Yaz0-encoded input RSTB (``.srsizetable``) will be automatically decoded. Outp
 Lastly, using ``-t`` will output a text file that lists the ``CRC32`` values in hex, as well as their sizes and the unknown value (if present).
 
 ## Adding/Updating a CRC32 Entry
-```RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -m ./mod/ -a-p ./mod/Model/PlayerHair00.Nin_NX_NVN.zs```  
-This would add ``Model\PlayerHair00.Nin_NX_NVN`` (after automatically removing the .zs extension and mod path) to the CRC32 table (as ``0x61685DFC``).  
+```
+RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -m ./mod/ -a-p ./mod/Model/PlayerHair00.Nin_NX_NVN.zs
+```  
+This would add ``Model\PlayerHair00.Nin_NX_NVN`` (after automatically removing the ``.zs`` extension and mod path) to the CRC32 table (as ``0x61685DFC``).  
 Its size will be automatically calculated from the local file. In this case, the file ends with ``.zs``, so its ZSTD uncompressed size will be used.  
 Any existing ``0x61685DFC`` entry would be removed first.
 
@@ -40,7 +42,8 @@ In that case, you would want to also manually specify the path using ``-a-p Mode
 If the path isn't to a local file that the program can find, you must manually specify the size.  
 To specify the size (in bytes), you would add ``-a-s 631424``.  
 Example:  
-```RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -a-p Model\PlayerHair00.Nin_NX_NVN -a-s 631424
+```
+RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -a-p Model\PlayerHair00.Nin_NX_NVN -a-s 631424
 
 Reading Resource Table data...
 Decompressing RSTB to new file: .\rstb\ResourceSizeTable.rsizetable
@@ -50,14 +53,16 @@ Added Entry to CRC32 Table: Model/PlayerHair00.Nin_NX_NVN 631424 False
         CRC32: 0x61685DFC (1634229756)
 Saving and compressing new RSTB...
 Encoding output file with Yaz0...
-Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable```  
+Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable
+```
 If you don't specify a size, it will attempt to automatically derive it from the local file.  
 
 ### Adding/Updating Multiple Entries
 To add/replace multiple entries, simply specify ``-m`` without ``-a-p``. It will automatically get the size and relative path of each file in the directory and add them to the table.  
   
 Example:  
-```-i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -m ./mod/
+```
+-i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -m ./mod/
 
 Reading Resource Table data...
 Decompressing RSTB to new file: .\rstb\ResourceSizeTable.rsizetable
@@ -84,13 +89,15 @@ Added Entry to CRC32 Table: Model/PlayerHair00.Nin_NX_NVN 681424 False
         CRC32: 0x61685DFC (1634229756)
 Saving and compressing new RSTB...
 Encoding output file with Yaz0...
-Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable```
+Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable
+```
 
 ## Deleting an Existing Entry
 Use ``-d-p`` to remove a path instead of adding a path. Use ``-n`` if you are removing from the Named table, otherwise it will remove entries from the CRC32 table.
   
 Example:  
-```RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -m ./mod/ -d-p ./mod/Model/PlayerHair00.Nin_NX_NVN.zs
+```
+RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -m ./mod/ -d-p ./mod/Model/PlayerHair00.Nin_NX_NVN.zs
 
 Reading Resource Table data...
 Decompressing RSTB to new file: .\rstb\ResourceSizeTable.rsizetable
@@ -99,9 +106,11 @@ Removed .zs extension from path: Model/PlayerHair00.Nin_NX_NVN
 Removing existing CRC32 entries: 0x61685DFC (1634229756)
 Saving and compressing new RSTB...
 Encoding output file with Yaz0...
-Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable```  
+Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable
+```
 Alternatively:
-```RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -d-p Model\PlayerHair00.Nin_NX_NVN
+```
+RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -o ./output/ResourceSizeTable.srsizetable -d-p Model\PlayerHair00.Nin_NX_NVN
 
 Reading Resource Table data...
 Decompressing RSTB to new file: .\rstb\ResourceSizeTable.rsizetable
@@ -109,13 +118,15 @@ Could not find local file, skipping processing path: Model\PlayerHair00.Nin_NX_N
 Removing existing CRC32 entries: 0x61685DFC (1634229756)
 Saving and compressing new RSTB...
 Encoding output file with Yaz0...
-Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable```
+Done, RSTB file saved to: ./output/ResourceSizeTable.srsizetable
+```
 
 ## Checking an Existing Entry
 Use ``-c`` to check a path. The console will print the current CRC32 (in hex and uint32) value, its size in bytes, and whether the unknown value is set.  
   
 Example:  
-```RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -m ./mod/ -c ./mod/Model/PlayerHair00.Nin_NX_NVN.zs
+```
+RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -m ./mod/ -c ./mod/Model/PlayerHair00.Nin_NX_NVN.zs
 
 Reading Resource Table data...
 Decompressing RSTB to new file: .\rstb\ResourceSizeTable.rsizetable
@@ -127,9 +138,11 @@ Found existing CRC32 entry:
         Size (bytes): 287653
         Unknown: 0
 Could not find existing Name entry: Model/PlayerHair00.Nin_NX_NVN
-Done, no changes were made so new RSTB was not saved.```  
+Done, no changes were made so new RSTB was not saved.
+```
 Alternatively:  
-```RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -c Model\PlayerHair00.Nin_NX_NVN
+```
+RSTBPatcher.exe -i ./rstb/ResourceSizeTable.srsizetable -c Model\PlayerHair00.Nin_NX_NVN
 
 Reading Resource Table data...
 Decompressing RSTB to new file: .\rstb\ResourceSizeTable.rsizetable
@@ -140,7 +153,8 @@ Found existing CRC32 entry:
         Size (bytes): 287653
         Unknown: 0
 Could not find existing Name entry: Model/PlayerHair00.Nin_NX_NVN
-Done, no changes were made so new RSTB was not saved.```  
+Done, no changes were made so new RSTB was not saved.
+```
 
 ## Outputting a .txt File
 If you want an easy way to review the data stored in the RSTB file, add ``-t`` to output the data in ``.txt`` format.  
@@ -152,7 +166,8 @@ At the moment, this only applies to ``.zs`` files when the size isn't manually s
 Even with processing skipped, a relative path will still be automatically used when a mod directory is specified with ``-m``. 
 
 # List of Parameters
-```RSTBPatcher <option> <args> [optional parameters]
+```
+RSTBPatcher <option> <args> [optional parameters]
 
 Options:
 -i
@@ -197,4 +212,5 @@ The size to reserve for the file. By default, this will be calculated automatica
 
 -d-p
 --d-path
-The path (or CRC32) of the entry to delete from the ResourceTable.```
+The path (or CRC32) of the entry to delete from the ResourceTable.
+```
