@@ -119,6 +119,12 @@ namespace RSTBPatcher
             if (crc32 == 0)
                 crc32 = StringToCRC32(path);
 
+            if (size == -1)
+            {
+                Console.WriteLine($"Skipping adding path, no size set: {path}");
+                return rstb;
+            }
+
             // Remove existing entry with matching CRC32 or path
             rstb = RSTB.Delete(rstb, path, useNamed);
 
@@ -160,7 +166,7 @@ namespace RSTBPatcher
                 if (rstb.EntryTable.Any(x => x.Crc32.Equals(crc32)))
                 {
                     rstb.EntryTable.RemoveAll(x => x.Crc32.Equals(crc32));
-                    Console.WriteLine($"Removing existing CRC32 entry: 0x{CRC32ToHexString(crc32)} ({crc32})");
+                    Console.WriteLine($"Removing existing CRC32 entries: 0x{CRC32ToHexString(crc32)} ({crc32})");
                 }
                 else
                     Console.WriteLine($"Could not find existing CRC32 entry to remove: 0x{CRC32ToHexString(crc32)} ({crc32})");
@@ -200,6 +206,43 @@ namespace RSTBPatcher
             if (!Directory.Exists(Path.GetDirectoryName(path)))
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, txt);
+        }
+        public static void Check(RSTB rstb, string path)
+        {
+            // Don't convert path if it's already CRC32 in hex form
+            uint crc32 = 0;
+            try
+            {
+                crc32 = HexStringToCRC32(path);
+            }
+            catch { }
+            if (crc32 == 0)
+                crc32 = StringToCRC32(path);
+
+            if (rstb.EntryTable.Any(x => x.Crc32.Equals(crc32)))
+            {
+                foreach (var entry in rstb.EntryTable.Where(x => x.Crc32.Equals(crc32)))
+                    Console.WriteLine($"Found existing CRC32 entry:" +
+                        $"\n\tCRC32 (hex): 0x{CRC32ToHexString(entry.Crc32)}" +
+                        $"\n\tCRC32 (uint32): {entry.Crc32}" +
+                        $"\n\tSize (bytes): {entry.Size}" +
+                        $"\n\tUnknown: {entry.Unknown}");
+            }
+            else
+                Console.WriteLine($"Could not find existing CRC32 entry: 0x{CRC32ToHexString(crc32)} ({crc32})");
+            
+            byte[] name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray();
+            if (rstb.NameTable.Any(x => x.Name.Equals(name)))
+            {
+                foreach (var entry in rstb.NameTable.Where(x => x.Name.Equals(name)))
+                    Console.WriteLine($"Found existing CRC32 entry:" +
+                        $"\n\tName: {path}" +
+                        $"\n\tSize (bytes): {entry.Size}" +
+                        $"\n\tUnknown: {entry.Unknown}");
+            }
+            else
+                Console.WriteLine($"Could not find existing Name entry: {path}");
+
         }
         public static RSTB LoadTxt(string path)
         {

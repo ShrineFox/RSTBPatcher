@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="CRC.Fast.Net.Core" Version="1.0.0" />
+    <PackageReference Include="Zstandard.Net" Version="1.1.7" />
+    <PackageReference Include="ZstdNet" Version="1.4.5" />
   </ItemGroup>
 
   <ItemGroup>
