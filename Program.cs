@@ -6,12 +6,13 @@ using System.Numerics;
 using System.Text;
 using Soft160.Data.Cryptography;
 using TGE.SimpleCommandLine;
+using System.Windows.Forms;
 
 namespace RSTBPatcher
 {
     class Program
     {
-        public static ProgramOptions Options { get; private set; }
+        public static ProgramOptions Options { get; set; }
         public class ProgramOptions
         {
             [Option("i", "input", "filepath", "Specifies the path to the ResourceTable file to use as input.", Required = true)]
@@ -22,9 +23,6 @@ namespace RSTBPatcher
 
             [Option("m", "mod-dir", "directorypath", "Directory containing mod filestructure to update ResourceTable with.")]
             public string ModDir { get; set; }
-
-            [Option("t", "txt", "true|false", "When true, dump output RSTB data to a text file.")]
-            public bool DumpTxt { get; set; } = false;
 
             [Option("c", "check", "filepath", "Shows the CRC32 and size of a filepath in the RSTB if it exists.")]
             public string Check { get; set; }
@@ -60,25 +58,38 @@ namespace RSTBPatcher
             }
         }
 
+        [STAThread]
         static void Main(string[] args)
         {
-            try
-            {
-                string about = SimpleCommandLineFormatter.Default.FormatAbout<ProgramOptions>("ShrineFox", "ResourceSizeTable parser and patcher for Nintendo Switch games.");
-                Console.WriteLine(about);
-                Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(args);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return;
-            }
-            Console.WriteLine("Reading Resource Table data...");
+            Application.EnableVisualStyles();
 
-            DoOptions();
+            if (args.Length > 0)
+            {
+                // Process commandline arguments
+                try
+                {
+                    string about = SimpleCommandLineFormatter.Default.FormatAbout<ProgramOptions>("ShrineFox", "RSTBPatcher v1.2 - ResourceSizeTable parser and patcher for Nintendo Switch games.");
+                    Console.WriteLine(about);
+                    Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(args);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    return;
+                }
+                Console.WriteLine("Reading Resource Table data...");
+
+                DoOptions();
+            }
+            else
+            {
+                // Launch GUI
+                Application.Run(new MainForm());
+            }
+            
         }
 
-        private static void DoOptions()
+        public static void DoOptions()
         {
             bool fileChanged = false;
 
@@ -134,19 +145,20 @@ namespace RSTBPatcher
                         Console.WriteLine($"Could not find mod directory: \"{Options.ModDir}\"");
                 }
 
-                // Output new RSTB and optionally .txt
-                if (Options.DumpTxt)
-                {
-                    RSTB.DumpTxt(rstb, Options.Input + ".txt");
-                    Console.WriteLine($"Dumped RSTB to .txt: {Options.Input}.txt");
-                }
-
                 if (fileChanged || Path.GetExtension(Options.Input) == ".txt")
                 {
                     if (!string.IsNullOrEmpty(Options.Output))
                     {
-                        Console.WriteLine("Saving and compressing new RSTB...");
-                        RSTB.Save(rstb, Options.Output);
+                        if (Path.GetExtension(Options.Output).ToLower() == ".txt")
+                        {
+                            Console.WriteLine("Saving RSTB as text document...");
+                            RSTB.DumpTxt(rstb, Options.Input + ".txt");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Saving and compressing new RSTB...");
+                            RSTB.Save(rstb, Options.Output);
+                        }
                         Console.WriteLine($"Done, RSTB file saved to: {Options.Output}");
                     }
                     else

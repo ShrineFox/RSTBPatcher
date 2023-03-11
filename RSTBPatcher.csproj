@@ -1,14 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <NoWin32Manifest>true</NoWin32Manifest>
     <Version>1.1.0</Version>
+    <UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CRC.Fast.Net.Core" Version="1.0.0" />
+    <PackageReference Include="DarkUI" Version="2.0.2" />
+    <PackageReference Include="WindowsAPICodePack" Version="7.0.4" />
     <PackageReference Include="Zstandard.Net" Version="1.1.7" />
     <PackageReference Include="ZstdNet" Version="1.4.5" />
   </ItemGroup>
@@ -27,6 +30,22 @@
     <None Update="2.0.6\ResourceSizeTable.rsizetable.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Ryan\.nuget\packages\zstdnet\1.4.5\build\x64\libzstd.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Ryan\.nuget\packages\zstandard.net\1.1.7\build\x64\libzstd.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Ryan\.nuget\packages\zstdnet\1.4.5\build\x86\libzstd.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Ryan\.nuget\packages\zstandard.net\1.1.7\build\x86\libzstd.dll" />
   </ItemGroup>
 
 </Project>
