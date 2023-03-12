@@ -7,6 +7,7 @@ using System.Text;
 using Soft160.Data.Cryptography;
 using TGE.SimpleCommandLine;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace RSTBPatcher
 {
@@ -61,9 +62,16 @@ namespace RSTBPatcher
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool SetProcessDPIAware();
 
+        [DllImport("kernel32.dll")]
+        static extern bool AttachConsole(int dwProcessId);
+        private const int ATTACH_PARENT_PROCESS = -1;
+
         [STAThread]
         static void Main(string[] args)
         {
+            // Activate console output
+            AttachConsole(ATTACH_PARENT_PROCESS);
+
             if (args.Length > 0)
             {
                 // Process commandline arguments
@@ -151,7 +159,7 @@ namespace RSTBPatcher
                         Console.WriteLine($"Could not find mod directory: \"{Options.ModDir}\"");
                 }
 
-                if (fileChanged || Path.GetExtension(Options.Input) == ".txt")
+                if (fileChanged || Path.GetExtension(Options.Input).ToLower() == ".txt" || Path.GetExtension(Options.Output).ToLower() == ".txt")
                 {
                     if (!string.IsNullOrEmpty(Options.Output))
                     {
