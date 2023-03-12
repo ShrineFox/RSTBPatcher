@@ -58,11 +58,12 @@ namespace RSTBPatcher
             }
         }
 
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetProcessDPIAware();
+
         [STAThread]
         static void Main(string[] args)
         {
-            Application.EnableVisualStyles();
-
             if (args.Length > 0)
             {
                 // Process commandline arguments
@@ -83,6 +84,11 @@ namespace RSTBPatcher
             }
             else
             {
+                // Set DPI Awareness
+                Application.EnableVisualStyles();
+                if (Environment.OSVersion.Version.Major >= 6)
+                    SetProcessDPIAware();
+                Application.SetCompatibleTextRenderingDefault(false);
                 // Launch GUI
                 Application.Run(new MainForm());
             }

@@ -30,6 +30,7 @@ namespace RSTBPatcher
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.groupBox_Files = new DarkUI.Controls.DarkGroupBox();
             this.tlp_Files = new System.Windows.Forms.TableLayoutPanel();
             this.tlp_Output = new System.Windows.Forms.TableLayoutPanel();
@@ -285,6 +286,7 @@ namespace RSTBPatcher
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(718, 424);
             this.Controls.Add(this.tlp_Main);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "RSTBPatcher GUI v1.2";
             this.groupBox_Files.ResumeLayout(false);

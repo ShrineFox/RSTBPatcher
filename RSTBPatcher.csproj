@@ -1,16 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <NoWin32Manifest>true</NoWin32Manifest>
     <Version>1.1.0</Version>
     <UseWindowsForms>True</UseWindowsForms>
+    <ApplicationIcon>pitfall.ico</ApplicationIcon>
+    <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CRC.Fast.Net.Core" Version="1.0.0" />
     <PackageReference Include="DarkUI" Version="2.0.2" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
     <PackageReference Include="WindowsAPICodePack" Version="7.0.4" />
     <PackageReference Include="Zstandard.Net" Version="1.1.7" />
     <PackageReference Include="ZstdNet" Version="1.4.5" />
@@ -31,6 +33,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  
+  <ItemGroup>
+	<RuntimeHostConfigurationOption Include="Switch.System.Windows.DoNotScaleForDpiChanges" Value="true" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="C:\Users\Ryan\.nuget\packages\zstdnet\1.4.5\build\x64\libzstd.dll" />
@@ -46,6 +52,10 @@
 
   <ItemGroup>
     <None Remove="C:\Users\Ryan\.nuget\packages\zstandard.net\1.1.7\build\x86\libzstd.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="pitfall.ico" />
   </ItemGroup>
 
 </Project>
