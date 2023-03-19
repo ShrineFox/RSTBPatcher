@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <Version>1.1.0</Version>
     <UseWindowsForms>True</UseWindowsForms>
     <ApplicationIcon>pitfall.ico</ApplicationIcon>

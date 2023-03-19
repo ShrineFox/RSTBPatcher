@@ -9,10 +9,8 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using DarkUI.Forms;
-using Microsoft.WindowsAPICodePack;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using static RSTBPatcher.Program;
-using static System.Windows.Forms.Design.AxImporter;
 using TGE.SimpleCommandLine;
 
 namespace RSTBPatcher
@@ -22,7 +20,7 @@ namespace RSTBPatcher
         public MainForm()
         {
             InitializeComponent();
-            txt_Status.Text = "RSTBPatcher v1.2 by ShrineFox";
+            txt_Status.Text = $"{Program.Version} by ShrineFox";
         }
 
         public static void SetOptions()

@@ -13,6 +13,7 @@ namespace RSTBPatcher
 {
     class Program
     {
+        public static string Version { get; set; } = "RSTBPatcher v1.2.1";
         public static ProgramOptions Options { get; set; }
         public class ProgramOptions
         {
@@ -77,7 +78,8 @@ namespace RSTBPatcher
                 // Process commandline arguments
                 try
                 {
-                    string about = SimpleCommandLineFormatter.Default.FormatAbout<ProgramOptions>("ShrineFox", "RSTBPatcher v1.2 - ResourceSizeTable parser and patcher for Nintendo Switch games.");
+                    string about = SimpleCommandLineFormatter.Default.FormatAbout<ProgramOptions>("ShrineFox", 
+                        $"{Version} - ResourceSizeTable parser and patcher for Nintendo Switch games.");
                     Console.WriteLine(about);
                     Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(args);
                 }
