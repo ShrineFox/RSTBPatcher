@@ -24,5 +24,7 @@ This feature is intended for advanced users and very specific scenarios.
 See [the wiki](https://github.com/ShrineFox/RSTBPatcher/wiki) for all information on using the commandline mode.
 
 # Known Issues
+- The program does not start unless you [install the proper version of .NET Core](https://github.com/ShrineFox/RSTBPatcher/issues/3#issuecomment-1475409778)
 - Although I intended for this tool to be able to set the new unknown value in RSTC to 1, it doesn't work yet.
 - Not all files have their paths automatically corrected yet (i.e. files inside .sbactorpacks or .pack in BotW), right now just .sbfres files automatically have their entries renamed to .bfres (and their decompressed size used), and .zs files automatically have .zs removed from the entry and the decompressed size used.
+- Files ending with .zs that aren't actually ZSTD compressed [need to be re-saved with compression using Switch Toolbox](https://github.com/ShrineFox/RSTBPatcher/issues/4), or else user gets "unknown frame descriptor" error
