@@ -21,6 +21,10 @@ namespace RSTBPatcher
         {
             InitializeComponent();
             txt_Status.Text = $"{Program.Version} by ShrineFox";
+            txt_RSTB.Text = @"C:\Users\Ryan\Downloads\sagesoul\BetterSageSouls\contents\0100f2c0115b6000\romfs\System\Resource\In\ResourceSizeTable.Product.110.rsizetable";
+            txt_Mod.Text = @"C:\Users\Ryan\Downloads\sagesoul\BetterSageSouls\contents\0100f2c0115b6000\romfs";
+            txt_Output.Text = @"C:\Users\Ryan\Downloads\sagesoul\BetterSageSouls\contents\0100f2c0115b6000\romfs\System\Resource\ResourceSizeTable.Product.110.rsizetable";
+            btn_Patch.Enabled = true;
         }
 
         public static void SetOptions()

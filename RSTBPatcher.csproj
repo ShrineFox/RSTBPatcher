@@ -7,6 +7,7 @@
     <UseWindowsForms>True</UseWindowsForms>
     <ApplicationIcon>pitfall.ico</ApplicationIcon>
     <NoWin32Manifest>true</NoWin32Manifest>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\cs-restbl\lib\Native.IO\src\Native.IO.csproj" />
+    <ProjectReference Include="..\cs-restbl\src\CsRestbl.Managed\CsRestbl.Managed.csproj" />
     <ProjectReference Include="..\SimpleCommandLine\Source\SimpleCommandLine\SimpleCommandLine.csproj" />
   </ItemGroup>
 

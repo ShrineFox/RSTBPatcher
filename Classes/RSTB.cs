@@ -283,7 +283,7 @@ namespace RSTBPatcher
             return Encoding.ASCII.GetString(name).TrimEnd('\0');
         }
 
-        private static uint StringToCRC32(string path)
+        public static uint StringToCRC32(string path)
         {
             return CRC.Crc32(Encoding.ASCII.GetBytes(path));
         }

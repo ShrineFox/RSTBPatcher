@@ -8,6 +8,8 @@ using Soft160.Data.Cryptography;
 using TGE.SimpleCommandLine;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using CsRestbl.Managed;
+using Native.IO.Services;
 
 namespace RSTBPatcher
 {
@@ -109,6 +111,7 @@ namespace RSTBPatcher
         {
             bool fileChanged = false;
 
+            /*
             // Decode Yaz0
             if (Path.GetExtension(Options.Input) == ".srsizetable")
             {
@@ -120,6 +123,7 @@ namespace RSTBPatcher
 
             RSTB rstb = LoadRSTB();
 
+            
             if (rstb != null)
             {
                 if (!string.IsNullOrEmpty(Options.Check))
@@ -185,6 +189,41 @@ namespace RSTBPatcher
                 else
                     Console.WriteLine("Done, no changes were made so new RSTB was not saved.");
             }
+            */
+
+            byte[] data = File.ReadAllBytes(Options.Input);
+            Restbl restbl = Restbl.FromBinary(data);
+
+            /*
+                Console.WriteLine(restbl.CrcTable.Count);
+                foreach (var entry in restbl.CrcTable)
+                    Console.WriteLine($"{entry.Hash}: {entry.Size}");
+            */
+
+            // Update actor pack sizes
+            foreach (var file in Directory.GetFiles(Options.ModDir, "*", SearchOption.AllDirectories).Where(x => !x.Contains("Resource") && !x.Contains("Dm") && !x.EndsWith(".pack")))
+            {
+                var processedPath = ProcessPath(file);
+                string path = processedPath.Item1;
+                //int size = processedPath.Item2;
+                uint pathCrc = RSTB.StringToCRC32(path);
+
+                if (restbl.CrcTable.Any(x => x.Hash.Equals(pathCrc)))
+                {
+                    string unpackedFile = file.Replace(".pack.zs", ".pack");
+                    if (File.Exists(unpackedFile) && file != unpackedFile)
+                    {
+                        FileInfo fi = new FileInfo(unpackedFile);
+                        restbl.CrcTable.Remove(restbl.CrcTable.First(x => x.Hash.Equals(pathCrc)));
+                        restbl.CrcTable.Add(new CrcEntry(pathCrc, Convert.ToUInt32(fi.Length + 5000)));
+                    }
+                }
+            }
+
+            
+
+            using FileStream fs = File.Create(Options.Output);
+            fs.Write(restbl.ToBinary());
         }
 
         private static Tuple<string, int> ProcessPath(string file, bool print = true)

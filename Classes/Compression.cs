@@ -48,6 +48,7 @@ namespace RSTBPatcher
 
         public static int DecompressedSize(string input)
         {
+            /*
             if (File.Exists(input))
             {
                 using (var ms = new MemoryStream(File.ReadAllBytes(input)))
@@ -61,6 +62,8 @@ namespace RSTBPatcher
             }
             else
                 Console.WriteLine($"Could not find input file: {Path.GetFileName(input)}");
+            */
+            // TODO: Use dictionary for TOTK
             return -1;
         }
     }
