@@ -12,6 +12,8 @@ using DarkUI.Forms;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using static RSTBPatcher.Program;
 using TGE.SimpleCommandLine;
+using System.Linq;
+using ShrineFox.IO;
 
 namespace RSTBPatcher
 {
@@ -20,12 +22,10 @@ namespace RSTBPatcher
         public MainForm()
         {
             InitializeComponent();
-            txt_Status.Text = $"{Program.Version} by ShrineFox";
-        }
+            Output.Logging = true;
+            Output.LogControl = rtb_Log;
 
-        public static void SetOptions()
-        {
-
+            Output.Log($"{Program.Version} by ShrineFox");
         }
 
         private void RSTB_Click(object sender, EventArgs e)
@@ -57,9 +57,17 @@ namespace RSTBPatcher
 
         private void Patch_Click(object sender, EventArgs e)
         {
-            Program.Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(new string[] { "-i", $"{txt_RSTB.Text}", "-m", $"{txt_Mod.Text}", "-o", $"{txt_Output.Text}" });
+            List<string> args = new List<string>() { "-i", $"{txt_RSTB.Text}", "-m", $"{txt_Mod.Text}", "-o", $"{txt_Output.Text}" };
+
+            if (chk_DeleteMode.Checked)
+            {
+                args.Add("-da");
+                args.Add("true");
+            }
+
+            Program.Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(args.ToArray());
             Program.DoOptions();
-            txt_Status.Text = $"[{DateTime.Now.ToString("MM/dd/yyyy HH:mm tt")}] Done patching RSTB.";
+            Output.Log($"Done patching RSTB.");
         }
 
         private void ValidatePaths(object sender, EventArgs e)

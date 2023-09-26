@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="CRC.Fast.Net.Core" Version="1.0.0" />
-    <PackageReference Include="DarkUI" Version="2.0.2" />
+    <PackageReference Include="DarkModeUI" Version="3.1.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
     <PackageReference Include="WindowsAPICodePack" Version="7.0.4" />
     <PackageReference Include="Zstandard.Net" Version="1.1.7" />
@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ShrineFox.IO\ShrineFox.IO.csproj" />
     <ProjectReference Include="..\SimpleCommandLine\Source\SimpleCommandLine\SimpleCommandLine.csproj" />
   </ItemGroup>
 

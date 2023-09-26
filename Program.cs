@@ -8,12 +8,13 @@ using Soft160.Data.Cryptography;
 using TGE.SimpleCommandLine;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using ShrineFox.IO;
 
 namespace RSTBPatcher
 {
     class Program
     {
-        public static string Version { get; set; } = "RSTBPatcher v1.2.1";
+        public static string Version { get; set; } = "RSTBPatcher v1.2.2";
         public static ProgramOptions Options { get; set; }
         public class ProgramOptions
         {
@@ -37,6 +38,9 @@ namespace RSTBPatcher
 
             [Option("sp", "skipprocessing", "true|false", "When true, uncompressed size won't be automatically derived from compressed files, and extensions won't be modified.")]
             public bool SkipProcessing { get; set; } = false;
+
+            [Option("da", "delete-all", "true|false", "When true, all updated entries using -m will be deleted instead.")]
+            public bool DeleteAll { get; set; } = false;
 
             [Group("a")]
             public AddOptions Add { get; set; }
@@ -72,6 +76,7 @@ namespace RSTBPatcher
         {
             // Activate console output
             AttachConsole(ATTACH_PARENT_PROCESS);
+            Output.Logging = true;
 
             if (args.Length > 0)
             {
@@ -80,15 +85,15 @@ namespace RSTBPatcher
                 {
                     string about = SimpleCommandLineFormatter.Default.FormatAbout<ProgramOptions>("ShrineFox", 
                         $"{Version} - ResourceSizeTable parser and patcher for Nintendo Switch games.");
-                    Console.WriteLine(about);
+                    Output.Log(about);
                     Options = SimpleCommandLineParser.Default.Parse<ProgramOptions>(args);
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Output.Log(e.Message);
                     return;
                 }
-                Console.WriteLine("Reading Resource Table data...");
+                Output.Log("Reading Resource Table data...");
 
                 DoOptions();
             }
@@ -113,7 +118,7 @@ namespace RSTBPatcher
             if (Path.GetExtension(Options.Input) == ".srsizetable")
             {
                 string newPath = Path.Combine(Path.GetDirectoryName(Options.Input), Path.GetFileNameWithoutExtension(Options.Input) + ".rsizetable");
-                Console.WriteLine($"Decompressing RSTB to new file: {newPath}");
+                Output.Log($"Decompressing RSTB to new file: {newPath}");
                 Yaz0.Decode(Options.Input, newPath);
                 Options.Input = newPath;
             }
@@ -153,12 +158,16 @@ namespace RSTBPatcher
                             var processedPath = ProcessPath(file);
                             string path = processedPath.Item1;
                             int size = processedPath.Item2;
-                            rstb = RSTB.Add(rstb, path, size, Options.UseNamedTable, Options.SetUnknown);
+                            if (!Options.DeleteAll)
+                                rstb = RSTB.Add(rstb, path, size, Options.UseNamedTable, Options.SetUnknown);
+                            else
+                                rstb = RSTB.Delete(rstb, path);
+
                             fileChanged = true;
                         }
                     }
                     else
-                        Console.WriteLine($"Could not find mod directory: \"{Options.ModDir}\"");
+                        Output.Log($"Could not find mod directory: \"{Options.ModDir}\"");
                 }
 
                 if (fileChanged || Path.GetExtension(Options.Input).ToLower() == ".txt" || Path.GetExtension(Options.Output).ToLower() == ".txt")
@@ -167,23 +176,23 @@ namespace RSTBPatcher
                     {
                         if (Path.GetExtension(Options.Output).ToLower() == ".txt")
                         {
-                            Console.WriteLine("Saving RSTB as text document...");
+                            Output.Log("Saving RSTB as text document...");
                             RSTB.DumpTxt(rstb, Options.Input + ".txt");
                         }
                         else
                         {
-                            Console.WriteLine("Saving and compressing new RSTB...");
+                            Output.Log("Saving and compressing new RSTB...");
                             RSTB.Save(rstb, Options.Output);
                         }
-                        Console.WriteLine($"Done, RSTB file saved to: {Options.Output}");
+                        Output.Log($"Done, RSTB file saved to: {Options.Output}");
                     }
                     else
                     {
-                        Console.WriteLine("Done, output file was no specified so new RSTB was not saved.");
+                        Output.Log("Done, output file was no specified so new RSTB was not saved.");
                     }
                 }
                 else
-                    Console.WriteLine("Done, no changes were made so new RSTB was not saved.");
+                    Output.Log("Done, no changes were made so new RSTB was not saved.");
             }
         }
 
@@ -197,20 +206,20 @@ namespace RSTBPatcher
                 if (!string.IsNullOrEmpty(Options.ModDir))
                 {
                     relativePath = Path.GetRelativePath(Options.ModDir, relativePath).Replace("\\", "/");
-                    Console.WriteLine($"Made path relative to mod directory: {relativePath}");
+                    Output.Log($"Made path relative to mod directory: {relativePath}");
                 }
 
                 if (Path.GetExtension(relativePath) == ".zs" && !Options.SkipProcessing)
                 {
                     // Get size of file before ZSTD compression
                     relativePath = relativePath.Replace(".zs", "");
-                    Console.WriteLine($"Removed .zs extension from path: {relativePath}");
+                    Output.Log($"Removed .zs extension from path: {relativePath}");
                     int decompressedSize = Compression.DecompressedSize(file);
                     if (decompressedSize != -1 && size == -1 && print)
                     {
-                        Console.WriteLine($"Got ZSTD decompressed size: {decompressedSize}");
+                        Output.Log($"Got ZSTD decompressed size: {decompressedSize}");
                         size = decompressedSize + 50000;
-                        Console.WriteLine($"Added 50,000 bytes of padding to entry. Size is now: {size}");
+                        Output.Log($"Added 50,000 bytes of padding to entry. Size is now: {size}");
                     }
                 }
 
@@ -220,7 +229,7 @@ namespace RSTBPatcher
                     size = Convert.ToInt32(new FileInfo(file).Length);
             }
             else
-                Console.WriteLine($"Could not find local file, skipping processing path: {file}");
+                Output.Log($"Could not find local file, skipping processing path: {file}");
 
             return new Tuple<string, int>(relativePath, size);
         }
@@ -236,14 +245,14 @@ namespace RSTBPatcher
                     case ".txt":
                         return RSTB.LoadTxt(Options.Input);
                     default:
-                        Console.WriteLine($"Unknown extension: \"{Path.GetExtension(Options.Input)}\"" +
+                        Output.Log($"Unknown extension: \"{Path.GetExtension(Options.Input)}\"" +
                             $"\n\tThis tool can only parse: *.srsizetable, *.rsizetable, *.txt");
                         break;
                 }
             }
             else
             {
-                Console.WriteLine($"Could not find input file: \"{Options.Input}\"");
+                Output.Log($"Could not find input file: \"{Options.Input}\"");
             }
 
             return null;

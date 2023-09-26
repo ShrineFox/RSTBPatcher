@@ -1,4 +1,5 @@
-﻿using Soft160.Data.Cryptography;
+﻿using ShrineFox.IO;
+using Soft160.Data.Cryptography;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -94,17 +95,17 @@ namespace RSTBPatcher
             // Yaz0 Encode
             if (Path.GetExtension(outPath) != ".rsizetable")
             {
-                Console.WriteLine("Encoding output file with Yaz0...");
+                Output.Log("Encoding output file with Yaz0...");
                 Yaz0.Encode(outPath + ".temp", outPath);
 
 #if !DEBUG
-                Console.WriteLine("Deleting temporary unencoded file...");
+                Output.Log("Deleting temporary unencoded file...");
                 if (File.Exists(outPath + ".temp"))
                     File.Delete(outPath + ".temp");
 #endif
             }
             else
-                Console.WriteLine("Skipping Yaz0 encoding since output extension is .rsizetable.");
+                Output.Log("Skipping Yaz0 encoding since output extension is .rsizetable.");
 
         }
         public static RSTB Add(RSTB rstb, string path, int size = -1, bool useNamed = false, bool unknown = false)
@@ -121,7 +122,7 @@ namespace RSTBPatcher
 
             if (size == -1)
             {
-                Console.WriteLine($"Skipping adding path, no size set: {path}");
+                Output.Log($"Skipping adding path, no size set: {path}", ConsoleColor.Yellow);
                 return rstb;
             }
 
@@ -131,13 +132,13 @@ namespace RSTBPatcher
             if (!useNamed)
             {
                 rstb.EntryTable.Add(new RSTBTableEntry { Crc32 = crc32, Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
-                Console.WriteLine($"Added Entry to CRC32 Table: {path} {size} {unknown}\n\tCRC32: 0x{CRC32ToHexString(crc32)} ({crc32})");
+                Output.Log($"Added Entry to CRC32 Table: {path} {size} {unknown}\n\tCRC32: 0x{CRC32ToHexString(crc32)} ({crc32})", ConsoleColor.Green);
             }
             else
             {
                 byte[] name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray();
                 rstb.NameTable.Add(new RSTBNameEntry { Name = name, Size = Convert.ToUInt32(size), Unknown = Convert.ToUInt32(unknown) });
-                Console.WriteLine($"Added Entry to Named Table: {path} {size} {unknown}");
+                Output.Log($"Added Entry to Named Table: {path} {size} {unknown}", ConsoleColor.DarkGreen);
             }
 
             // Sort CRC32 values from lowest to highest
@@ -166,10 +167,10 @@ namespace RSTBPatcher
                 if (rstb.EntryTable.Any(x => x.Crc32.Equals(crc32)))
                 {
                     rstb.EntryTable.RemoveAll(x => x.Crc32.Equals(crc32));
-                    Console.WriteLine($"Removing existing CRC32 entries: 0x{CRC32ToHexString(crc32)} ({crc32})");
+                    Output.Log($"Removing existing CRC32 entries: 0x{CRC32ToHexString(crc32)} ({crc32})", ConsoleColor.Yellow);
                 }
                 else
-                    Console.WriteLine($"Could not find existing CRC32 entry to remove: 0x{CRC32ToHexString(crc32)} ({crc32})");
+                    Output.Log($"Could not find existing CRC32 entry to remove: 0x{CRC32ToHexString(crc32)} ({crc32})", ConsoleColor.Red);
             }
             else
             {
@@ -177,10 +178,10 @@ namespace RSTBPatcher
                 if (rstb.NameTable.Any(x => x.Name.Equals(name)))
                 {
                     rstb.NameTable.RemoveAll(x => x.Name.Equals(name));
-                    Console.WriteLine($"Removing existing Name entry: {path}");
+                    Output.Log($"Removing existing Name entry: {path}", ConsoleColor.DarkYellow);
                 }
                 else
-                    Console.WriteLine($"Could not find existing Name entry to remove: {path}");
+                    Output.Log($"Could not find existing Name entry to remove: {path}", ConsoleColor.Red);
             }
 
             // Update header sizes
@@ -222,26 +223,26 @@ namespace RSTBPatcher
             if (rstb.EntryTable.Any(x => x.Crc32.Equals(crc32)))
             {
                 foreach (var entry in rstb.EntryTable.Where(x => x.Crc32.Equals(crc32)))
-                    Console.WriteLine($"Found existing CRC32 entry:" +
+                    Output.Log($"Found existing CRC32 entry:" +
                         $"\n\tCRC32 (hex): 0x{CRC32ToHexString(entry.Crc32)}" +
                         $"\n\tCRC32 (uint32): {entry.Crc32}" +
                         $"\n\tSize (bytes): {entry.Size}" +
                         $"\n\tUnknown: {entry.Unknown}");
             }
             else
-                Console.WriteLine($"Could not find existing CRC32 entry: 0x{CRC32ToHexString(crc32)} ({crc32})");
+                Output.Log($"Could not find existing CRC32 entry: 0x{CRC32ToHexString(crc32)} ({crc32})");
             
             byte[] name = Encoding.ASCII.GetBytes(path).Concat(new byte[128 - path.Length]).ToArray();
             if (rstb.NameTable.Any(x => x.Name.Equals(name)))
             {
                 foreach (var entry in rstb.NameTable.Where(x => x.Name.Equals(name)))
-                    Console.WriteLine($"Found existing CRC32 entry:" +
+                    Output.Log($"Found existing CRC32 entry:" +
                         $"\n\tName: {path}" +
                         $"\n\tSize (bytes): {entry.Size}" +
                         $"\n\tUnknown: {entry.Unknown}");
             }
             else
-                Console.WriteLine($"Could not find existing Name entry: {path}");
+                Output.Log($"Could not find existing Name entry: {path}");
 
         }
         public static RSTB LoadTxt(string path)

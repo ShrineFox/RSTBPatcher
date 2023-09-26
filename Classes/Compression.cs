@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ShrineFox.IO;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -23,13 +24,13 @@ namespace RSTBPatcher
                         byte[] outputBytes = temp.ToArray();
                         File.WriteAllBytes(output, outputBytes);
                     }
-                    Console.WriteLine($"Decompressed ZSTD file: {Path.GetFileName(input)}");
+                    Output.Log($"Decompressed ZSTD file: {Path.GetFileName(input)}");
                 }
                 else
-                    Console.WriteLine($"File already exists, skipping ZSTD decompression: {Path.GetFileName(output)}");
+                    Output.Log($"File already exists, skipping ZSTD decompression: {Path.GetFileName(output)}");
             }
             else
-                Console.WriteLine($"Could not find input file: {Path.GetFileName(input)}");
+                Output.Log($"Could not find input file: {Path.GetFileName(input)}");
         }
 
         public static void Compress(string input, string output)
@@ -40,10 +41,10 @@ namespace RSTBPatcher
                 var outputBytes = compressor.Wrap(File.ReadAllBytes(input));
                 File.WriteAllBytes(output, outputBytes);
 
-                Console.WriteLine($"Compressed file with ZSTD: {Path.GetFileName(input)}");
+                Output.Log($"Compressed file with ZSTD: {Path.GetFileName(input)}");
             }
             else
-                Console.WriteLine($"Could not find input file: {Path.GetFileName(input)}");
+                Output.Log($"Could not find input file: {Path.GetFileName(input)}");
         }
 
         public static int DecompressedSize(string input)
@@ -60,7 +61,7 @@ namespace RSTBPatcher
                 }
             }
             else
-                Console.WriteLine($"Could not find input file: {Path.GetFileName(input)}");
+                Output.Log($"Could not find input file: {Path.GetFileName(input)}");
             return -1;
         }
     }
