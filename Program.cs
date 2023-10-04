@@ -153,7 +153,7 @@ namespace RSTBPatcher
                     // Update RSTB with files from mod directory
                     if (Directory.Exists(Options.ModDir))
                     {
-                        foreach (var file in Directory.GetFiles(Options.ModDir, "*", SearchOption.AllDirectories))
+                        foreach (var file in Directory.GetFiles(Options.ModDir, "*", SearchOption.AllDirectories).Where(x => !x.Contains(".git")))
                         {
                             var processedPath = ProcessPath(file);
                             string path = processedPath.Item1;
